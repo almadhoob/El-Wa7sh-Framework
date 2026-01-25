@@ -22,9 +22,34 @@ export function h(tag, props = {}, ...children) {
  * @param {HTMLElement} container The DOM element to render into.
  */
 export function render(vNode, container) {
+    // 1. Snapshot Focus
+    const activeElement = document.activeElement;
+    const selectionStart = activeElement ? activeElement.selectionStart : null;
+    const selectionEnd = activeElement ? activeElement.selectionEnd : null;
+    let activeId = null;
+    if (activeElement && activeElement.id) {
+        activeId = activeElement.id;
+    }
+
+    // 2. Clear and Render
     container.innerHTML = '';
     const element = createDomElement(vNode);
     container.appendChild(element);
+
+    // 3. Restore Focus
+    if (activeId) {
+        const restored = document.getElementById(activeId);
+        if (restored) {
+            restored.focus();
+            if (selectionStart !== null && selectionEnd !== null && typeof restored.setSelectionRange === 'function') {
+                try {
+                    restored.setSelectionRange(selectionStart, selectionEnd);
+                } catch (e) {
+                    // Ignore if setSelectionRange fails (e.g. non-text inputs)
+                }
+            }
+        }
+    }
 }
 
 function createDomElement(vNode) {
@@ -45,14 +70,22 @@ function createDomElement(vNode) {
     if (props) {
         Object.entries(props).forEach(([key, value]) => {
             if (key.startsWith('on') && typeof value === 'function') {
-                // Direct event binding (standard) - but we will use custom system mostly
+                // Direct event binding
                 element.addEventListener(key.substring(2).toLowerCase(), value);
             } else if (key === 'className') {
-                element.setAttribute('class', value);
+                if (value) element.setAttribute('class', value);
+            } else if (key === 'checked') {
+                // Special handling for boolean attributes
+                if (value) element.setAttribute(key, '');
+                element.checked = !!value;
+            } else if (key === 'value') {
+                element.value = value;
             } else if (key === 'style' && typeof value === 'object') {
                 Object.assign(element.style, value);
             } else {
-                element.setAttribute(key, value);
+                if (value !== false && value !== null && value !== undefined) {
+                    element.setAttribute(key, value);
+                }
             }
         });
     }
@@ -125,14 +158,21 @@ export function registerEvent(eventName, handler) {
 
 // Initialize Global Delegate
 export function initEventSystem() {
-    ['click', 'change', 'input', 'submit'].forEach(eventType => {
+    ['click', 'change', 'input', 'submit', 'dblclick', 'keydown', 'keyup'].forEach(eventType => {
         document.addEventListener(eventType, (e) => {
             const target = e.target;
-            const handlerName = target.getAttribute(`wa7sh-${eventType}`);
+            // Traverse up to find element with wa7sh-{event}
+            let el = target;
+            while (el && el !== document) {
+                const handlerName = el.getAttribute(`wa7sh-${eventType}`);
+                if (handlerName && eventRegistry[handlerName]) {
+                    // Don't prevent default blindly - e.g. for checkboxes or text inputs
+                    if (eventType === 'submit') e.preventDefault();
 
-            if (handlerName && eventRegistry[handlerName]) {
-                e.preventDefault(); // Prevent default for things like submit, links
-                eventRegistry[handlerName](e, target);
+                    eventRegistry[handlerName](e, el);
+                    break; // Only fire the first one found bubbling up
+                }
+                el = el.parentElement;
             }
         });
     });
@@ -148,18 +188,18 @@ export function registerRoute(path, component) {
 }
 
 export function navigate(path) {
-    window.history.pushState({}, '', path);
-    update();
+    window.location.hash = path;
 }
 
-// Router Component to use
 export function Router() {
-    const path = window.location.pathname;
-    const Component = routes[path] || routes['/404'] || (() => h('div', {}, '404 Not Found'));
+    // Hash routing
+    const hash = window.location.hash.slice(1) || '/'; // Default to /
+
+    const Component = routes[hash] || routes['/'] || (() => h('div', {}, '404'));
     return h(Component, {});
 }
 
-// Listen to popstate
-window.addEventListener('popstate', () => {
+// Listen to hashchange
+window.addEventListener('hashchange', () => {
     update();
 });
