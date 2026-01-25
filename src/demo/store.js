@@ -1,4 +1,4 @@
-import { createStore } from './el-wa7sh.js';
+import { createStore } from '../el-wa7sh.js';
 
 const STORAGE_KEY = 'todo-wa7sh';
 

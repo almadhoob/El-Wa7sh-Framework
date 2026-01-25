@@ -1,4 +1,4 @@
-import { h, registerEvent } from '../el-wa7sh.js';
+import { h, registerEvent } from '../../el-wa7sh.js';
 import { store, actions } from '../store.js';
 
 // --- Event Handlers ---
