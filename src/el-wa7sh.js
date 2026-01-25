@@ -149,12 +149,7 @@ export function registerRoute(path, component) {
 
 export function navigate(path) {
     window.history.pushState({}, '', path);
-    handleRoute();
-}
-
-export function handleRoute() {
-    const path = window.location.pathname;
-    const Component = routes[path] || routes['/404'] || (() => h('h1', {}, '404 Not Found'));
+    update();
 }
 
 // Router Component to use
