@@ -42,10 +42,10 @@ const card = h('div', { className: 'card' },
 The second argument `props` is an object where keys are attribute names (like `id`, `style`) or property names (like `className` for `class`).
 
 ```javascript
-const btn = h('button', { 
+const btn = h('button', {
     className: 'btn-primary',
     id: 'submit-btn',
-    disabled: false 
+    disabled: false
 }, 'Submit');
 ```
 
@@ -160,7 +160,7 @@ mount(App, container);
 
 // 5. Reactivity
 store.subscribe(() => {
-    const { update } = import('./el-wa7sh.js'); 
+    const { update } = import('./el-wa7sh.js');
     update();
 });
 ```
@@ -169,4 +169,4 @@ store.subscribe(() => {
 
 ## Credits
 
-This is [El Wa7sh Framework](https://github.com/almadhoob/El-Wa7sh-Framework), which is licensed under the [MIT License](./LICENSE) by Ahmed Almadhoob.
+This is [El Wa7sh Framework](https://github.com/almadhoob/El-Wa7sh-Framework), which is licensed under the [GLWTS License](./LICENSE) by Ahmed Almadhoob.
